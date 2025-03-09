@@ -1,0 +1,23 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id          Int      @id @default(autoincrement())
+  user_id     BigInt   @unique
+  first_name  String?
+  last_name   String?
+  position    String?
+  role        String
+  create_date DateTime?
+  update_date DateTime?
+  username    String   @unique
+  password    String   @unique
+
+  @@map("users") // ให้ Prisma รู้จักตาราง users ในฐานข้อมูล
+}
