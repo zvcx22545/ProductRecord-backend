@@ -101,6 +101,13 @@ ctrl.login = async (req, res) => {
     const { user_id, password } = req.body;
   
     try {
+        
+        if (!user_id && user_id === '') {
+            return res.status(400).json({ status: false, message: "กรุณากรอกรหัสพนักงาน" });
+        } else if (!password && password === '') {
+            return res.status(400).json({ status: false, message: "กรุณากรอกรหัสผ่าน" });
+        }
+
       const user = await getUserById(user_id);
       if (!user) {
           return res.status(400).json({ status: false, message: "ไม่มีผู้ใช้งานนี้ในระบบ" });
