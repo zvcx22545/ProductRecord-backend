@@ -9,7 +9,6 @@ const dayjs = require('dayjs');
 async function createUser(data) {
     try {
       const currentDate = dayjs().toISOString();
-      console.log('check data ,', data)
   
       if (!data.password || !data.role || !data.user_id) {
         throw new Error("Username, password, and role are required fields.");
@@ -39,6 +38,7 @@ async function createUser(data) {
 
 async function getUserById(userId) {
     try {
+      console.log('check userId ,', userId)
         const user = await prisma.user.findUnique({
             where: {
                 user_id:userId

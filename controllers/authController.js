@@ -98,23 +98,29 @@ ctrl.register = async (req, res) => {
 };
 
 ctrl.login = async (req, res) => {
-    const { username, password } = req.body;
+    const { user_id, password } = req.body;
   
     try {
-      const user = await getUserByEmail(username);
+      const user = await getUserById(user_id);
       if (!user) {
-        return res.status(400).json({ status: false, message: "Invalid credentials" });
+          return res.status(400).json({ status: false, message: "ไม่มีผู้ใช้งานนี้ในระบบ" });
       }
   
-      const isMatch = await bcrypt.compare(password, user.password);
+        let isMatch = bcrypt.compare(password, user.password);
       if (!isMatch) {
-        return res.status(400).json({ status: false, message: "Invalid credentials" });
+          return res.status(400).json({ status: false, message: "รหัสผ่านไม่ถูกต้อง" });
       }
-  
-      const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET, { expiresIn: "1h" });
-  
-      res.json({ status: true, message: "Login successful", token, profile_image: user.profile_image });
+      const expiresIn = 60 * 60
+      const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET, { expiresIn });
+      const expiresAt = dayjs().add(expiresIn, "second").toISOString()
+
+        res.send({
+             status: true, message: "เข้าสู่ระบบสำเร็จ", 
+             token, 
+             expiresAt,
+             profile_image: user.profile_image 
+            });
     } catch (error) {
-      res.status(500).json({ status: false, message: "Error logging in", error: error.message });
+        res.status(500).json({ status: false, message: "กรุณากรอกข้อมูลให้ถูกต้อง", error: error.message });
     }
   };
