@@ -22,3 +22,22 @@ model User {
     @@map("users") // Prisma map ไปยังตาราง users ใน PostgreSQL
 
 }
+
+model Product {
+  id            Int       @id @default(autoincrement())
+  product_name  String?   @map("product_name")
+  user_used     String?   @map("user_used")
+  product_id    String?   @map("product_id")
+  price         String?   @map("price")
+  department    String?   @map("department")
+  product_type  String?   @map("product_type")
+  image         String?   @map("image")
+  add_by_user   String?   @map("add_by_user")
+  create_date   DateTime? @map("create_date")
+  update_date   DateTime? @map("update_date")
+
+  // Relation
+  user          User?     @relation(fields: [user_used], references: [user_id])
+
+  @@map("product")
+}
