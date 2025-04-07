@@ -8,36 +8,39 @@ datasource db {
 }
 
 model User {
-  id          Int      @id @default(autoincrement())
-  user_id     String?   @unique
-  first_name  String?
-  last_name   String?
-  department  String?
-  position    String?
-  role        String
-  create_date DateTime?
-  update_date DateTime?
-  password    String?
+  id            Int       @id @default(autoincrement())
+  user_id       String?   @unique
+  first_name    String?
+  last_name     String?
+  department    String?
+  position      String?
+  role          String
+  create_date   DateTime?
+  update_date   DateTime?
+  password      String?
   profile_image String?
-    @@map("users") // Prisma map ไปยังตาราง users ใน PostgreSQL
 
+  // 🔁 Back relation
+  products Product[] @relation("UserProducts")
+
+  @@map("users")
 }
 
 model Product {
-  id            Int       @id @default(autoincrement())
-  product_name  String?   @map("product_name")
-  user_used     String?   @map("user_used")
-  product_id    String?   @map("product_id")
-  price         String?   @map("price")
-  department    String?   @map("department")
-  product_type  String?   @map("product_type")
-  image         String?   @map("image")
-  add_by_user   String?   @map("add_by_user")
-  create_date   DateTime? @map("create_date")
-  update_date   DateTime? @map("update_date")
+  id           Int       @id @default(autoincrement())
+  product_name String?   @map("product_name")
+  user_used    String?   @map("user_used")
+  product_id   String?   @map("product_id")
+  price        String?   @map("price")
+  department   String?   @map("department")
+  product_type String?   @map("product_type")
+  image        String?   @map("image")
+  add_by_user  String?   @map("add_by_user")
+  create_date  DateTime? @map("create_date")
+  update_date  DateTime? @map("update_date")
 
-  // Relation
-  user          User?     @relation(fields: [user_used], references: [user_id])
+  // ✅ Relation
+  user User? @relation("UserProducts", fields: [user_used], references: [user_id])
 
   @@map("product")
 }
