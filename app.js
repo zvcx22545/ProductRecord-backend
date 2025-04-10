@@ -7,19 +7,20 @@ const helmet = require("helmet");
 const morgan = require("morgan");
 
 const app = express()
-app.use(cors({
-    origin: '*', // or your specific domain like 'http://localhost:5173'
-    methods: "GET,POST,PUT,DELETE,OPTIONS",
-    allowedHeaders: "Content-Type, Authorization"
-  }));
 
-  app.options('*', (req, res) => {
-    res.setHeader("Access-Control-Allow-Origin", "*"); // or your specific domain
-    res.setHeader("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE,OPTIONS");
-    res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
-    res.status(200).end();
-  });
+// กำหนด CORS options ให้เหมาะสม
+const corsOptions = {
+  origin: '*', // หรือกำหนด domain ที่คุณต้องการอนุญาต เช่น 'http://localhost:5173'
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'], // กำหนด methods ที่อนุญาต
+  allowedHeaders: ['Content-Type', 'Authorization'], // กำหนด headers ที่อนุญาต
+  preflightContinue: false, // ให้ตอบสนองด้วย CORS headers โดยอัตโนมัติ
+  optionsSuccessStatus: 204, // ส่ง status 204 สำหรับ preflight request
+};
 
+app.use(cors(corsOptions));
+
+// ตั้งค่ารับ OPTIONS request สำหรับ preflight
+app.options('*', cors(corsOptions));
 
 
 app.use(express.json())
@@ -29,7 +30,10 @@ app.use(helmet());
 app.use("/upload", (req, res, next) => {
     res.setHeader("Cross-Origin-Resource-Policy", "cross-origin"); // ใช้ cross-origin เพื่ออนุญาตการโหลดรูปข้าม origin
     next();
-  });
+});app.use("/upload", (req, res, next) => {
+  res.setHeader("Cross-Origin-Resource-Policy", "cross-origin"); // ใช้ cross-origin เพื่ออนุญาตการโหลดรูปข้าม origin
+  next();
+});
 app.use(morgan("combined"));
 
 const loadRoutes = (dir, basePath = "/api") => {
