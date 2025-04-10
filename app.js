@@ -53,9 +53,9 @@ loadRoutes(path.join(__dirname, "api"));
 app.use("/upload", express.static(path.join(__dirname, 'upload')));
 
 // If Vercel doesn't find a route, make sure it returns a fallback index.html (important for SPAs)
-// app.get('*', (req, res) => {
-//   res.sendFile(path.join(__dirname, 'build', 'index.html'));
-// });
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, 'build', 'index.html'));
+});
 
 // Error handling middleware
 app.use((err, req, res, next) => {
