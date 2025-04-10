@@ -2,16 +2,15 @@
     "version": 2,
     "builds": [
       {
-        "src": "api/index.js",
+        "src": "app.js", 
         "use": "@vercel/node",
-        "buildCommand": "npx prisma generate",
-          
+        "buildCommand": "npx prisma generate"
       }
     ],
     "routes": [
       {
         "src": "/(.*)",
-        "dest": "/api/index.js"
+        "dest": "app.js"
       }
     ]
   }
