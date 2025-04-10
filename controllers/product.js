@@ -42,7 +42,7 @@ const fileFilter = (req, file, cb) => {
     }
 };
 
-const upload = multer({ storage, fileFilter });
+// const upload = multer({ storage, fileFilter });
 
 // Get all products
 ctrl.getAllProducts = async (req, res) => {
