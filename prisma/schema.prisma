@@ -7,40 +7,43 @@ datasource db {
   url      = env("DATABASE_URL") // ใช้ค่า DATABASE_URL จาก .env
 }
 
+
 model User {
   id            Int       @id @default(autoincrement())
-  user_id       String?   @unique
-  first_name    String?
-  last_name     String?
-  department    String?
-  position      String?
-  role          String
-  create_date   DateTime?
-  update_date   DateTime?
-  password      String?
-  profile_image String?
+  user_id       String?   @unique @db.VarChar(255)
+  first_name    String?   @db.VarChar(255)
+  last_name     String?   @db.VarChar(255)
+  department    String?   @db.VarChar(255)
+  position      String?   @db.VarChar(255)
+  role          String    @db.VarChar(50)
+  create_date   DateTime? @db.Date
+  update_date   DateTime? @db.Date
+  password      String?   @db.VarChar(255)
+  profile_image String?   @db.VarChar(255)
 
-  // 🔁 Back relation
   products Product[] @relation("UserProducts")
 
   @@map("users")
 }
 
+
 model Product {
   id           Int       @id @default(autoincrement())
-  product_name String?   @map("product_name")
-  user_used    String?   @map("user_used")
-  product_id   String?   @map("product_id")
-  price        String?   @map("price")
-  department   String?   @map("department")
-  product_type String?   @map("product_type")
-  image        String?   @map("image")
-  add_by_user  String?   @map("add_by_user")
-  create_date  DateTime? @map("create_date")
-  update_date  DateTime? @map("update_date")
+  product_name String?   @map("product_name") @db.VarChar(255)
+  user_used    String?   @map("user_used") @db.VarChar(255)
+  product_id   String?   @map("product_id") @db.VarChar(255)
+  price        Int?      @map("price")
+  department   String?   @map("department") @db.VarChar(255)
+  product_type String?   @map("product_type") @db.VarChar(255)
+  image        String?   @map("image") @db.VarChar(255)
+  add_by_user  String?   @map("add_by_user") @db.VarChar(255)
+  create_date  DateTime? @map("create_date") @db.Date
+  update_date  DateTime? @map("update_date") @db.Date
+  user_used_id String?   @map("user_used_id") @db.VarChar(255)
 
-  // ✅ Relation
-  user User? @relation("UserProducts", fields: [user_used], references: [user_id])
+  user User? @relation("UserProducts", fields: [user_used_id], references: [user_id])
 
   @@map("product")
 }
+
+

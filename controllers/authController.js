@@ -110,7 +110,7 @@ ctrl.login = async (req, res) => {
 
       const user = await getUserById(user_id);
       if (!user) {
-          return res.status(400).json({ status: false, message: "ไม่มีผู้ใช้งานนี้ในระบบ" });
+          return res.status(400).json({ status: false, message: "ไม่มีผู้ใช้งานนี้ในระบบ กรุณาสมัครสมาชิก" });
       }
   
         let isMatch = bcrypt.compare(password, user.password);
@@ -125,7 +125,17 @@ ctrl.login = async (req, res) => {
              status: true, message: "เข้าสู่ระบบสำเร็จ", 
              token, 
              expiresAt,
-             profile_image: user.profile_image 
+             profile_image: user.profile_image ,
+             userid: user.user_id,
+             name: user.name,
+             email: user.email,
+             phone: user.phone,
+             address: user.address,
+             role: user.role,
+             department: user.department,
+             position: user.position,
+             create_date: user.create_date,
+             update_date: user.update_date
             });
     } catch (error) {
         res.status(500).json({ status: false, message: "กรุณากรอกข้อมูลให้ถูกต้อง", error: error.message });

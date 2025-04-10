@@ -7,9 +7,19 @@ const helmet = require("helmet");
 const morgan = require("morgan");
 
 const app = express()
-app.use(cors())
+app.use(cors({
+    origin: '*'  // อนุญาตทุก origin
+}));
+
+
 app.use(express.json())
 app.use(helmet());
+
+// เพิ่ม header สำหรับ Cross-Origin Resource Policy
+app.use("/upload", (req, res, next) => {
+    res.setHeader("Cross-Origin-Resource-Policy", "cross-origin"); // ใช้ cross-origin เพื่ออนุญาตการโหลดรูปข้าม origin
+    next();
+  });
 app.use(morgan("combined"));
 
 const loadRoutes = (dir, basePath = "/api") => {
@@ -30,7 +40,7 @@ const loadRoutes = (dir, basePath = "/api") => {
 // โหลด API อัตโนมัติจากโฟลเดอร์ `api`
 loadRoutes(path.join(__dirname, "api"))
 
-app.use("/uploads", express.static("uploads"))
+app.use("/upload", express.static("upload"))
 
 app.use((err, req, res, next) => {
     console.error(err)

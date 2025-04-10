@@ -1,16 +1,22 @@
 // controllers/product.js
 const multer = require('multer')
 const fs = require("fs")
+const path = require('path');
 const dayjs = require('dayjs')
+const utc = require('dayjs/plugin/utc')
+const timezone = require('dayjs/plugin/timezone')
 const { PrismaClient } = require('@prisma/client')
 const prisma = new PrismaClient()
 const ctrl = {}
+const modelProduct = require('../models/product')
+dayjs.extend(utc)
+dayjs.extend(timezone)
 
 // Set up multer storage configuration
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
-        const userid = req.body.user_id;
-        const uploadPath = `upload/user/${userid}`;
+        const userid = req.body.add_by_user;
+        const uploadPath = `upload/product`;
 
         // Check if user folder exists, create if not
         if (!fs.existsSync(uploadPath)) {
@@ -26,11 +32,12 @@ const storage = multer.diskStorage({
 });
 
 const fileFilter = (req, file, cb) => {
-    const allowedTypes = ['image/jpeg', 'image/png', 'image/svg+xml'];
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/svg+xml', 'image/webp'];
     if (allowedTypes.includes(file.mimetype)) {
         cb(null, true);
     } else {
-        cb(new Error("Upload only JPG, PNG, and SVG are allowed"));
+        cb(new Error("สามารถเพิ่มได้เฉพาะไฟล์ประเภท image/jpeg, image/png , webp และ image/svg+xml"), false);
+
     }
 };
 
@@ -44,7 +51,7 @@ ctrl.getAllProducts = async (req, res) => {
                 user: true
             }
         });
-        
+
         return res.status(200).json({
             status: 'success',
             data: products
@@ -63,7 +70,7 @@ ctrl.getAllProducts = async (req, res) => {
 ctrl.getProductById = async (req, res) => {
     try {
         const { id } = req.params;
-        
+
         const product = await prisma.product.findUnique({
             where: {
                 id: parseInt(id)
@@ -72,14 +79,14 @@ ctrl.getProductById = async (req, res) => {
                 user: true
             }
         });
-        
+
         if (!product) {
             return res.status(404).json({
                 status: 'error',
                 message: 'Product not found'
             });
         }
-        
+
         return res.status(200).json({
             status: 'success',
             data: product
@@ -98,7 +105,7 @@ ctrl.getProductById = async (req, res) => {
 ctrl.createProduct = async (req, res) => {
     try {
         const uploadMiddleware = upload.single('image');
-        
+
         uploadMiddleware(req, res, async (err) => {
             if (err) {
                 return res.status(400).json({
@@ -106,37 +113,54 @@ ctrl.createProduct = async (req, res) => {
                     message: err.message
                 });
             }
-            
+
             const {
                 product_name,
-                user_used,
+                employee_name,
+                employee_ID,
                 product_id,
-                price,
-                department,
+                product_price,
+                product_department,
                 product_type,
+                calendar,
                 add_by_user
             } = req.body;
-            
+
+            let price = parseInt(product_price)
+
+            console.log('check req.body', req.body)
+
+            // Verify if the employee exists
+            const employeeExists = await modelProduct.getUserUsedByID(employee_ID)
+            console.log('check employeeID', employeeExists)
+            if (!employeeExists || employeeExists.length === 0) {
+                return res.status(400).json({
+                    status: 'error',
+                    message: 'ไม่มีพนักงานคนนี้อยู่ในระบบ'
+                });
+            }
+
             // Image file path if uploaded
             const imagePath = req.file ? `${req.file.destination}/${req.file.filename}` : null;
-            let create_date = dayjs().toISOString()
-            let update_date = dayjs().toISOString()
-            
+            const bangkokDate = calendar ? dayjs(calendar).tz("Asia/Bangkok").format() : null;
+            const current_date = dayjs().tz("Asia/Bangkok").format();
+
             const newProduct = await prisma.product.create({
                 data: {
                     product_name,
-                    user_used,
+                    user_used: employee_name,
                     product_id,
-                    price,
-                    department,
+                    price: price,
+                    department: product_department,
                     product_type,
                     image: imagePath,
                     add_by_user,
-                    create_date: create_date,
-                    update_date: update_date,
+                    create_date: bangkokDate ? new Date(bangkokDate) : new Date(current_date),
+                    update_date: new Date(current_date),
+                    user_used_id: employee_ID,
                 }
             });
-            
+
             return res.status(201).json({
                 status: 'success',
                 message: 'Product created successfully',
@@ -158,7 +182,7 @@ ctrl.updateProduct = async (req, res) => {
     try {
         const { id } = req.params;
         const uploadMiddleware = upload.single('image');
-        
+
         uploadMiddleware(req, res, async (err) => {
             if (err) {
                 return res.status(400).json({
@@ -166,7 +190,7 @@ ctrl.updateProduct = async (req, res) => {
                     message: err.message
                 });
             }
-            
+
             const {
                 product_name,
                 user_used,
@@ -175,26 +199,26 @@ ctrl.updateProduct = async (req, res) => {
                 department,
                 product_type
             } = req.body;
-            
+
             // Get current product to check if there's an existing image
             const currentProduct = await prisma.product.findUnique({
                 where: {
                     id: parseInt(id)
                 }
             });
-            
+
             if (!currentProduct) {
                 return res.status(404).json({
                     status: 'error',
                     message: 'Product not found'
                 });
             }
-            
+
             // If a new file is uploaded, use it; otherwise, keep the existing image
-            const imagePath = req.file 
+            const imagePath = req.file
                 ? `${req.file.destination}/${req.file.filename}`
                 : currentProduct.image;
-            
+
             // Delete old image if new one is uploaded
             if (req.file && currentProduct.image) {
                 try {
@@ -203,7 +227,8 @@ ctrl.updateProduct = async (req, res) => {
                     console.error('Failed to delete old image:', unlinkError);
                 }
             }
-            
+            let update_date = dayjs().toISOString()
+
             const updatedProduct = await prisma.product.update({
                 where: {
                     id: parseInt(id)
@@ -216,10 +241,10 @@ ctrl.updateProduct = async (req, res) => {
                     department,
                     product_type,
                     image: imagePath,
-                    update_date: new Date()
+                    update_date: update_date
                 }
             });
-            
+
             return res.status(200).json({
                 status: 'success',
                 message: 'Product updated successfully',
@@ -240,21 +265,21 @@ ctrl.updateProduct = async (req, res) => {
 ctrl.deleteProduct = async (req, res) => {
     try {
         const { id } = req.params;
-        
+
         // Get current product to delete image if exists
         const product = await prisma.product.findUnique({
             where: {
                 id: parseInt(id)
             }
         });
-        
+
         if (!product) {
             return res.status(404).json({
                 status: 'error',
                 message: 'Product not found'
             });
         }
-        
+
         // Delete image file if exists
         if (product.image) {
             try {
@@ -263,14 +288,14 @@ ctrl.deleteProduct = async (req, res) => {
                 console.error('Failed to delete image:', unlinkError);
             }
         }
-        
+
         // Delete product from database
         await prisma.product.delete({
             where: {
                 id: parseInt(id)
             }
         });
-        
+
         return res.status(200).json({
             status: 'success',
             message: 'Product deleted successfully'
@@ -285,4 +310,60 @@ ctrl.deleteProduct = async (req, res) => {
     }
 };
 
+ctrl.getProductByType = async (req, res) => {
+    try {
+        console.log("check product type ==>", req.params)
+        const productType = req.params.productType;
+        // แปลงเป็น array เสมอเพื่อรองรับทั้ง string และ array
+        const productTypeArray = Array.isArray(productType)
+            ? productType
+            : typeof productType === 'string'
+            ? productType.split(',') // กรณีแบบ TO,MC,EQ จาก query param
+            : [];
+
+        console.log("Final productTypeArray =>", productTypeArray);
+        const product = await modelProduct.getProductByType(productTypeArray)
+        res.send({
+            status: 'success',
+            product
+        })
+    } catch (error) {
+        console.error('Error deleting product:', error);
+        return res.status(500).json({
+            status: 'error',
+            message: 'Failed to delete product',
+            error: error.message
+        });
+    }
+}
+
+
+ctrl.getImageProduct = async (req, res) => {
+    try {
+        const imageName = req.params.image;
+        const imagePath = path.join('upload', 'product', imageName);
+        
+        // Check if the file exists
+        if (fs.existsSync(imagePath)) {
+            // The file will be served by the static middleware
+            // Just redirect to the correct static URL
+            res.redirect(`/upload/product/${imageName}`);
+        } else {
+            res.status(404).json({
+                status: 'error',
+                message: 'Image not found'
+            });
+        }
+    } catch (error) {
+        console.error('Error retrieving image:', error);
+        res.status(500).json({
+            status: 'error',
+            message: 'Failed to retrieve image',
+            error: error.message
+        });
+    }
+};
+
+
 module.exports = ctrl;
+
