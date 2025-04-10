@@ -51,7 +51,9 @@ const loadRoutes = (dir, basePath = "/api") => {
 loadRoutes(path.join(__dirname, "api"))
 
 app.use("/upload", express.static("upload"))
-
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, 'build', 'index.html'));
+});
 app.use((err, req, res, next) => {
     console.error(err)
     res.status(500).json({ status: false, message: "Internal Server Error" })
