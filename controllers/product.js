@@ -1,5 +1,6 @@
 // controllers/product.js
-const multer = require('multer')
+const cloudinary = require("../utils/cloudinary");
+const upload = require("../utils/multer");
 const fs = require("fs")
 const path = require('path');
 const dayjs = require('dayjs')
@@ -137,8 +138,26 @@ ctrl.createProduct = async (req, res) => {
                 });
             }
 
+             // อัปโหลดไปยัง Cloudinary
+             let imageUrl = null;
+             if (req.file) {
+                 const result = await cloudinary.uploader.upload_stream(
+                     { folder: "product-images" }, // ตั้งชื่อ folder บน Cloudinary
+                     (error, result) => {
+                         if (error) throw error;
+                         imageUrl = result.secure_url;
+                     }
+                 );
+ 
+                 // ต้องใช้ stream เพื่อส่งไฟล์จาก buffer
+                 const stream = require('stream');
+                 const bufferStream = new stream.PassThrough();
+                 bufferStream.end(req.file.buffer);
+                 bufferStream.pipe(result);
+             }
+
             // Image file path if uploaded
-            const imagePath = req.file ? `${req.file.destination}/${req.file.filename}` : null;
+            // const imagePath = req.file ? `${req.file.destination}/${req.file.filename}` : null;
             const bangkokDate = calendar ? dayjs(calendar).tz("Asia/Bangkok").format() : null;
             const current_date = dayjs().tz("Asia/Bangkok").format();
 
@@ -150,7 +169,7 @@ ctrl.createProduct = async (req, res) => {
                     price: price,
                     department: product_department,
                     product_type,
-                    image: imagePath,
+                    image: imageUrl,
                     add_by_user,
                     create_date: bangkokDate ? new Date(bangkokDate) : new Date(current_date),
                     update_date: new Date(current_date),
