@@ -3,8 +3,7 @@
     "builds": [
       {
         "src": "app.js", 
-        "use": "@vercel/node",
-        "buildCommand": "npx prisma generate"
+        "use": "@vercel/node"
       }
     ],
     "routes": [
