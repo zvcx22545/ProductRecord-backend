@@ -4,6 +4,8 @@ const multer = require('multer')
 const fs = require("fs")
 const path = require("path")
 const dayjs = require('dayjs')
+const timezone = require('dayjs/plugin/timezone');
+dayjs.extend(timezone);
 
  const { getUserById , createUser } = require('../models/user')
 
@@ -119,7 +121,10 @@ ctrl.login = async (req, res) => {
       }
       const expiresIn = 60 * 60
       const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET, { expiresIn });
-      const expiresAt = dayjs().add(expiresIn, "second").toISOString()
+    //   const expiresAt = dayjs().add(expiresIn, "second").toISOString()
+    const expiresAt = dayjs().add(expiresIn, "second").tz('Asia/Bangkok').format('DD:MM:YYYY HH:mm:ss');
+
+
 
         res.send({
              status: true, message: "เข้าสู่ระบบสำเร็จ", 

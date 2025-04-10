@@ -5,7 +5,9 @@ const prisma = new PrismaClient();
 
 module.exports = { 
     getUserUsedByID,
-    getProductByType
+    getProductByType,
+    getProductByID,
+    deleteProduct,
 }
 
 async function getUserUsedByID(userID) {
@@ -23,9 +25,34 @@ async function getProductByType (ProductType) {
             product_type: Array.isArray(ProductType)
                 ? { in: ProductType }
                 : ProductType
+        },
+        orderBy: {
+            id: 'asc'  // เรียงจาก id ที่ใหญ่ที่สุดไปหาน้อยที่สุด
+          }
+    });
+    return row;
+}
+
+async function getProductByID (id) {
+    const row = await prisma.product.findMany({
+        where: {
+            id: id
         }
     });
     return row;
 }
-    
 
+async function deleteProduct (productID) {
+    try {
+        const deletedProduct = await prisma.product.delete({
+            where: {
+                id: productID
+            }
+        });
+
+        return { success: true, deletedProduct };
+    } catch (error) {
+        console.error('Error deleting product:', error);
+        return { success: false, message: 'Failed to delete product', error: error.message };
+    }
+}

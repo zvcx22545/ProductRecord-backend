@@ -128,11 +128,8 @@ ctrl.createProduct = async (req, res) => {
 
             let price = parseInt(product_price)
 
-            console.log('check req.body', req.body)
-
             // Verify if the employee exists
             const employeeExists = await modelProduct.getUserUsedByID(employee_ID)
-            console.log('check employeeID', employeeExists)
             if (!employeeExists || employeeExists.length === 0) {
                 return res.status(400).json({
                     status: 'error',
@@ -312,37 +309,35 @@ ctrl.deleteProduct = async (req, res) => {
 
 ctrl.getProductByType = async (req, res) => {
     try {
-        console.log("check product type ==>", req.params)
-        const productType = req.params.productType;
-        // แปลงเป็น array เสมอเพื่อรองรับทั้ง string และ array
+        const productType = req.query.productType;
         const productTypeArray = Array.isArray(productType)
             ? productType
             : typeof productType === 'string'
-            ? productType.split(',') // กรณีแบบ TO,MC,EQ จาก query param
-            : [];
+                ? productType.split(',') // เช่น ?productType=ZZ,SV
+                : [];
+        const product = await modelProduct.getProductByType(productTypeArray);
 
-        console.log("Final productTypeArray =>", productTypeArray);
-        const product = await modelProduct.getProductByType(productTypeArray)
         res.send({
             status: 'success',
             product
-        })
+        });
     } catch (error) {
-        console.error('Error deleting product:', error);
+        console.error('Error fetching product:', error);
         return res.status(500).json({
             status: 'error',
-            message: 'Failed to delete product',
+            message: 'Failed to fetch product',
             error: error.message
         });
     }
 }
 
 
+
 ctrl.getImageProduct = async (req, res) => {
     try {
         const imageName = req.params.image;
         const imagePath = path.join('upload', 'product', imageName);
-        
+
         // Check if the file exists
         if (fs.existsSync(imagePath)) {
             // The file will be served by the static middleware
@@ -363,6 +358,74 @@ ctrl.getImageProduct = async (req, res) => {
         });
     }
 };
+
+
+ctrl.updateProducts = async (req, res) => {
+    try {
+        const products = req.body.products;
+        // Get current time in UTC+7 (Thailand Time)
+        const currentTimeInTz = dayjs().tz('Asia/Bangkok').format()  // Adjust this format as needed
+        // ใช้ Promise.all เพื่ออัพเดทแต่ละรายการ
+
+        const updatedProducts = await Promise.all(products.map(product => {
+            const updatedCreateDate = product.create_date 
+                ? dayjs(product.create_date).tz('Asia/Bangkok').format()
+                : currentTimeInTz;
+            return prisma.product.update({
+                where: { id: product.id },  // ใช้ id เพื่อระบุแถวที่ต้องการอัพเดท
+                data: {
+                    product_name: product.product_name,
+                    user_used: product.user_used,
+                    product_id: product.product_id,
+                    price: product.price,
+                    department: product.department,
+                    product_type: product.product_type,
+                    add_by_user: product.add_by_user,
+                    update_date: currentTimeInTz,  // Set update_date to current time in UTC+7
+                    create_date: updatedCreateDate
+                },
+            });
+        }));
+
+        console.log('Updated products:', updatedProducts);
+        res.status(200).json({ status: 'success', updatedProducts });
+    } catch (error) {
+        console.error('Error updating products:', error);
+        res.status(500).json({
+            status: 'error',
+            message: 'Failed to update products',
+            error: error.message
+        });
+    }
+};
+
+ctrl.deleteProductById = async (req, res) => {
+    try {
+        const id = parseInt(req.params.id)
+        const ckproduct = await modelProduct.getProductByID(id).then(row => row[0])
+        if (!ckproduct) {
+            res.status(404).json({
+                status: 'error',
+                message: 'Product not found'
+            })
+            return
+        }
+        if (ckproduct.id) {
+            await modelProduct.deleteProduct(id)
+        }
+        res.status(200).json({
+            status: 'success',
+            message: 'Product deleted successfully'
+        })
+    } catch (error) {
+        console.log('error to delete product', error)
+        res.status(500).json({
+            status: 'error',
+            message: 'Failed to delete product',
+            error: error.message
+        })
+    }
+}
 
 
 module.exports = ctrl;
