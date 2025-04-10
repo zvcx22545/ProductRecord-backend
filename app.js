@@ -13,14 +13,12 @@ const corsOptions = {
   origin: '*', // หรือกำหนด domain ที่คุณต้องการอนุญาต เช่น 'http://localhost:5173'
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
-  preflightContinue: false,
-  optionsSuccessStatus: 204,
+  preflightContinue: true, // ให้ preflight continue ได้
+  optionsSuccessStatus: 204, // ส่ง status 204 สำหรับ preflight request
 };
 
 app.use(cors(corsOptions));
-
-// ตั้งค่ารับ OPTIONS request สำหรับ preflight
-app.options('*', cors(corsOptions));
+app.options('*', cors(corsOptions)); // กำหนดให้ตอบสนองกับทุก path
 
 app.use(express.json());
 app.use(helmet());
@@ -55,9 +53,9 @@ loadRoutes(path.join(__dirname, "api"));
 app.use("/upload", express.static(path.join(__dirname, 'upload')));
 
 // If Vercel doesn't find a route, make sure it returns a fallback index.html (important for SPAs)
-app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, 'build', 'index.html'));
-});
+// app.get('*', (req, res) => {
+//   res.sendFile(path.join(__dirname, 'build', 'index.html'));
+// });
 
 // Error handling middleware
 app.use((err, req, res, next) => {
