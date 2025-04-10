@@ -14,33 +14,33 @@ dayjs.extend(utc)
 dayjs.extend(timezone)
 
 // Set up multer storage configuration
-const storage = multer.diskStorage({
-    destination: (req, file, cb) => {
-        const userid = req.body.add_by_user;
-        const uploadPath = `upload/product`;
+// const storage = multer.diskStorage({
+//     destination: (req, file, cb) => {
+//         const userid = req.body.add_by_user;
+//         const uploadPath = `upload/product`;
 
-        // Check if user folder exists, create if not
-        if (!fs.existsSync(uploadPath)) {
-            fs.mkdirSync(uploadPath, { recursive: true });
-        }
+//         // Check if user folder exists, create if not
+//         if (!fs.existsSync(uploadPath)) {
+//             fs.mkdirSync(uploadPath, { recursive: true });
+//         }
 
-        cb(null, uploadPath);
-    },
+//         cb(null, uploadPath);
+//     },
 
-    filename: (req, file, cb) => {
-        cb(null, `${Date.now()}-${file.originalname}`);
-    }
-});
+//     filename: (req, file, cb) => {
+//         cb(null, `${Date.now()}-${file.originalname}`);
+//     }
+// });
 
-const fileFilter = (req, file, cb) => {
-    const allowedTypes = ['image/jpeg', 'image/png', 'image/svg+xml', 'image/webp'];
-    if (allowedTypes.includes(file.mimetype)) {
-        cb(null, true);
-    } else {
-        cb(new Error("สามารถเพิ่มได้เฉพาะไฟล์ประเภท image/jpeg, image/png , webp และ image/svg+xml"), false);
+// const fileFilter = (req, file, cb) => {
+//     const allowedTypes = ['image/jpeg', 'image/png', 'image/svg+xml', 'image/webp'];
+//     if (allowedTypes.includes(file.mimetype)) {
+//         cb(null, true);
+//     } else {
+//         cb(new Error("สามารถเพิ่มได้เฉพาะไฟล์ประเภท image/jpeg, image/png , webp และ image/svg+xml"), false);
 
-    }
-};
+//     }
+// };
 
 // const upload = multer({ storage, fileFilter });
 
