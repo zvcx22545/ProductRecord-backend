@@ -10,6 +10,8 @@ const { PrismaClient } = require('@prisma/client')
 const prisma = new PrismaClient()
 const ctrl = {}
 const modelProduct = require('../models/product')
+const stream = require('stream');
+
 dayjs.extend(utc)
 dayjs.extend(timezone)
 
@@ -147,23 +149,29 @@ ctrl.createProduct = async (req, res) => {
                 });
             }
 
-             // อัปโหลดไปยัง Cloudinary
-             let imageUrl = null;
-             if (req.file) {
-                 const result = await cloudinary.uploader.upload(
-                     { folder: "product-images" }, // ตั้งชื่อ folder บน Cloudinary
-                     (error, result) => {
-                         if (error) throw error;
-                         imageUrl = result.secure_url;
-                     }
-                 );
- 
-                 // ต้องใช้ stream เพื่อส่งไฟล์จาก buffer
-                 const stream = require('stream');
-                 const bufferStream = new stream.PassThrough();
-                 bufferStream.end(req.file.buffer);
-                 bufferStream.pipe(result);
-             }
+            // อัปโหลดไปยัง Cloudinary
+            const bufferStream = new stream.PassThrough();
+            bufferStream.end(req.file.buffer);
+
+            const uploadFromBuffer = () => {
+                return new Promise((resolve, reject) => {
+                    const cloudinaryStream = cloudinary.uploader.upload_stream(
+                        { folder: 'product-images' }, // ตำแหน่งจัดเก็บ
+                        (error, result) => {
+                            if (error) return reject(error);
+                            resolve(result);
+                        }
+                    );
+
+                    bufferStream.pipe(cloudinaryStream);
+                });
+            };
+
+            let imageUrl = null;
+            if (req.file) {
+                const result = await uploadFromBuffer();
+                imageUrl = result.secure_url;
+            }
 
             // Image file path if uploaded
             // const imagePath = req.file ? `${req.file.destination}/${req.file.filename}` : null;
@@ -394,11 +402,24 @@ ctrl.updateProducts = async (req, res) => {
         // Get current time in UTC+7 (Thailand Time)
         const currentTimeInTz = dayjs().tz('Asia/Bangkok').format()  // Adjust this format as needed
         // ใช้ Promise.all เพื่ออัพเดทแต่ละรายการ
+        console.log('check product ==>', products)
+        for (let item of products) {
+            const ckproduct = await modelProduct.getProductByProductID(item.product_id).then(row => row[0])
+
+            if (ckproduct) {
+                return res.status(400).json({
+                    status: 'error',
+                    message: 'มีเลขสินทรัพย์นนี้อยู่ในระบบแล้ว'
+                });
+            }
+
+        }
 
         const updatedProducts = await Promise.all(products.map(product => {
-            const updatedCreateDate = product.create_date 
+            const updatedCreateDate = product.create_date
                 ? dayjs(product.create_date).tz('Asia/Bangkok').format()
                 : currentTimeInTz;
+
             return prisma.product.update({
                 where: { id: product.id },  // ใช้ id เพื่อระบุแถวที่ต้องการอัพเดท
                 data: {
