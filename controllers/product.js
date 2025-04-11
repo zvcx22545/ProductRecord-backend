@@ -138,10 +138,19 @@ ctrl.createProduct = async (req, res) => {
                 });
             }
 
+            const ckproduct = await modelProduct.getProductByProductID(product_id).then(row => row[0])
+
+            if (ckproduct) {
+                return res.status(400).json({
+                    status: 'error',
+                    message: 'มีเลขสินทรัพย์นนี้อยู่ในระบบแล้ว'
+                });
+            }
+
              // อัปโหลดไปยัง Cloudinary
              let imageUrl = null;
              if (req.file) {
-                 const result = await cloudinary.uploader.upload_stream(
+                 const result = await cloudinary.uploader.upload(
                      { folder: "product-images" }, // ตั้งชื่อ folder บน Cloudinary
                      (error, result) => {
                          if (error) throw error;

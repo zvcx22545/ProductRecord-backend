@@ -8,6 +8,7 @@ module.exports = {
     getProductByType,
     getProductByID,
     deleteProduct,
+    getProductByProductID,
 }
 
 async function getUserUsedByID(userID) {
@@ -37,6 +38,14 @@ async function getProductByID (id) {
     const row = await prisma.product.findMany({
         where: {
             id: id
+        }
+    });
+    return row;
+}
+async function getProductByProductID (product_id) {
+    const row = await prisma.product.findMany({
+        where: {
+            product_id: product_id
         }
     });
     return row;
