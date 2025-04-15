@@ -2,7 +2,8 @@ const { PrismaClient } = require('@prisma/client')
 const prisma = new PrismaClient()
 module.exports = {
     createUser,
-    getUserById
+    getUserById,
+    updateUserById
 }
 const dayjs = require('dayjs');
 // create user
@@ -51,4 +52,33 @@ async function getUserById(userId) {
         throw new Error(e.message || "An error occurred while fetching the user.");
     } 
   }
+
+async function updateUserById(data, profile_image, imagePublicId) {
+    try {
+      console.log('check data', data)
+      console.log('check profile_image', profile_image)
+         const currentDate = dayjs().tz('Asia/Bangkok').format()
+      const id = parseInt(data.id, 10)
+        const updatedUser = await prisma.user.update({
+            where: {
+              id: id
+            },
+            data: {
+                first_name: data.first_name || null,
+                last_name: data.last_name || null,
+                department: data.department, // Assuming username is department for now
+                position: data.position || null,
+                profile_image: profile_image || null, // Allow optional profile_image
+                update_date: currentDate, 
+                profile_image_public_id: imagePublicId,
+            }
+        });
+
+        return updatedUser;
+
+    } catch (error) {
+        console.error("Error updating user:", error);
+        throw new Error(error.message || "An error occurred while updating the user.");
+    }
+}
 

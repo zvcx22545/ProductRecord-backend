@@ -16,10 +16,11 @@ model User {
   department    String?   @db.VarChar(255)
   position      String?   @db.VarChar(255)
   role          String    @db.VarChar(50)
-  create_date   DateTime? @db.Date
-  update_date   DateTime? @db.Date
+  create_date   DateTime? @db.Timestamptz
+  update_date   DateTime? @db.Timestamptz
   password      String?   @db.VarChar(255)
   profile_image String?   @db.VarChar(255)
+  profile_image_public_id   String? @db.VarChar(255)
 
   products Product[] @relation("UserProducts")
 
@@ -37,9 +38,10 @@ model Product {
   product_type String?   @map("product_type") @db.VarChar(255)
   image        String?   @map("image") @db.VarChar(255)
   add_by_user  String?   @map("add_by_user") @db.VarChar(255)
-  create_date  DateTime? @map("create_date") @db.Date
-  update_date  DateTime? @map("update_date") @db.Date
+  create_date  DateTime? @map("create_date") @db.Timestamptz
+  update_date  DateTime? @map("update_date") @db.Timestamptz
   user_used_id String?   @map("user_used_id") @db.VarChar(255)
+  image_public_id  String? @db.VarChar(255)
 
   user User? @relation("UserProducts", fields: [user_used_id], references: [user_id])
 

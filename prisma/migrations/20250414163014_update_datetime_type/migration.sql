@@ -7,8 +7,8 @@ CREATE TABLE "users" (
     "department" VARCHAR(255),
     "position" VARCHAR(255),
     "role" VARCHAR(50) NOT NULL,
-    "create_date" DATE,
-    "update_date" DATE,
+    "create_date" TIMESTAMPTZ,
+    "update_date" TIMESTAMPTZ,
     "password" VARCHAR(255),
     "profile_image" VARCHAR(255),
 
@@ -26,8 +26,8 @@ CREATE TABLE "product" (
     "product_type" VARCHAR(255),
     "image" VARCHAR(255),
     "add_by_user" VARCHAR(255),
-    "create_date" DATE,
-    "update_date" DATE,
+    "create_date" TIMESTAMPTZ,
+    "update_date" TIMESTAMPTZ,
     "user_used_id" VARCHAR(255),
 
     CONSTRAINT "product_pkey" PRIMARY KEY ("id")
