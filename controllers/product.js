@@ -38,41 +38,6 @@ ctrl.getAllProducts = async (req, res) => {
     }
 }
 
-// Get product by ID
-ctrl.getProductById = async (req, res) => {
-    try {
-        const { id } = req.params
-
-        const product = await prisma.product.findUnique({
-            where: {
-                id: parseInt(id)
-            },
-            include: {
-                user: true
-            }
-        })
-
-        if (!product) {
-            return res.status(404).json({
-                status: 'error',
-                message: 'Product not found'
-            })
-        }
-
-        return res.status(200).json({
-            status: 'success',
-            data: product
-        });
-    } catch (error) {
-        console.error('Error fetching product:', error);
-        return res.status(500).json({
-            status: 'error',
-            message: 'Failed to fetch product',
-            error: error.message
-        });
-    }
-};
-
 // Create new product with file upload
 ctrl.createProduct = async (req, res) => {
     try {
@@ -364,6 +329,67 @@ ctrl.deleteProductById = async (req, res) => {
     }
 }
 
+ctrl.getProductByProductID = async (req, res) => {
+    try {
+        const { product_id } = req.body;
+
+        if (!product_id) {
+            return res.status(400).json({
+                status: 'error',
+                message: 'กรุณาระบุ product_id',
+            });
+        }
+
+        const product = await modelProduct.getProductByProductID(product_id)
+        console.log('product ==>', product)
+
+        if (!product) {
+            return res.status(404).json({
+                status: 'error',
+                message: 'ไม่พบสินทรัพย์',
+            });
+        }
+
+        res.send({
+            status: 'success',
+            product,
+        });
+        
+    } catch (error) {
+        res.status(500).json({
+            status: 'error',
+            message: 'Failed to get product',
+            error: error.message
+        })
+    }
+}
+
+ctrl.getSuggestions = async (req, res) => {
+    try {
+        const { query } = req.body;
+        
+        if (!query || query.length < 1) {
+            return res.status(200).json({
+                status: 'success',
+                suggestions: []
+            });
+        }
+        
+        const suggestions = await modelProduct.getSuggestions(query);
+        
+        return res.status(200).json({
+            status: 'success',
+            suggestions
+        });
+    } catch (error) {
+        console.error('Error in getSuggestions:', error);
+        return res.status(500).json({
+            status: 'error',
+            message: 'Failed to get suggestions',
+            error: error.message
+        });
+    }
+}
 
 module.exports = ctrl
 

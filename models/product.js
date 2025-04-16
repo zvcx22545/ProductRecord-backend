@@ -9,6 +9,7 @@ module.exports = {
     getProductByID,
     deleteProduct,
     getProductByProductID,
+    getSuggestions,
 }
 
 async function getUserUsedByID(userID) {
@@ -63,5 +64,34 @@ async function deleteProduct (productID) {
     } catch (error) {
         console.error('Error deleting product:', error);
         return { success: false, message: 'Failed to delete product', error: error.message };
+    }
+}
+
+async function getSuggestions(query) {
+    try {
+        // Get matching product IDs even with a single character
+        const suggestions = await prisma.product.findMany({
+            where: {
+                product_id: {
+                    contains: query,
+                    mode: 'insensitive' // Case-insensitive search
+                }
+            },
+            select: {
+                product_id: true
+            },
+            take: 10, // Limit to 10 results
+            orderBy: {
+                product_id: 'asc' // Order results alphabetically
+            }
+        });
+        
+        // Return just the product_id strings and filter out nulls
+        return suggestions
+            .map(item => item.product_id)
+            .filter(id => id !== null && id !== undefined);
+    } catch (error) {
+        console.error('Error fetching suggestions:', error);
+        throw error;
     }
 }
