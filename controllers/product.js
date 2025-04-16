@@ -92,6 +92,7 @@ ctrl.createProduct = async (req, res) => {
                 employee_ID,
                 product_id,
                 product_price,
+                product_number,
                 product_department,
                 product_type,
                 calendar,
@@ -99,6 +100,7 @@ ctrl.createProduct = async (req, res) => {
             } = req.body
 
             let price = parseInt(product_price)
+            let product_num = parseInt(product_number)
             console.log('check calendar', calendar)
             const employeeExists = await modelProduct.getUserUsedByID(employee_ID)
 
@@ -166,6 +168,7 @@ ctrl.createProduct = async (req, res) => {
                     update_date: currentBangkokTime,
                     user_used_id: employee_ID,
                     image_public_id: imagePublicId,
+                    product_num: product_num,
                 }
             })
 
@@ -293,6 +296,7 @@ ctrl.updateProducts = async (req, res) => {
         const currentTimeInTz = dayjs().tz('Asia/Bangkok').format()  // Adjust this format as needed
         // ใช้ Promise.all เพื่ออัพเดทแต่ละรายการ
         const updatedProducts = await Promise.all(products.map(product => {
+            const product_number = parseInt(product.product_number)
 
             return prisma.product.update({
                 where: { id: product.id },  // ใช้ id เพื่อระบุแถวที่ต้องการอัพเดท
@@ -301,6 +305,7 @@ ctrl.updateProducts = async (req, res) => {
                     user_used: product.user_used,
                     product_id: product.product_id,
                     price: product.price,
+                    product_num: product_number,
                     department: product.department,
                     product_type: product.product_type,
                     add_by_user: product.add_by_user,
