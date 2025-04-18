@@ -29,7 +29,7 @@ async function getProductByType(ProductType) {
                 : ProductType
         },
         orderBy: {
-            id: 'asc'  // เรียงจาก id ที่ใหญ่ที่สุดไปหาน้อยที่สุด
+            create_date: 'asc'  // เรียงจาก id ที่ใหญ่ที่สุดไปหาน้อยที่สุด
         }
     });
     return row;
