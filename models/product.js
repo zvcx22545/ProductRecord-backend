@@ -3,7 +3,7 @@
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 
-module.exports = { 
+module.exports = {
     getUserUsedByID,
     getProductByType,
     getProductByID,
@@ -21,21 +21,21 @@ async function getUserUsedByID(userID) {
     return user;
 }
 
-async function getProductByType (ProductType) {
+async function getProductByType(ProductType) {
     const row = await prisma.product.findMany({
-          where: {
+        where: {
             product_type: Array.isArray(ProductType)
                 ? { in: ProductType }
                 : ProductType
         },
         orderBy: {
             id: 'asc'  // เรียงจาก id ที่ใหญ่ที่สุดไปหาน้อยที่สุด
-          }
+        }
     });
     return row;
 }
 
-async function getProductByID (id) {
+async function getProductByID(id) {
     const row = await prisma.product.findMany({
         where: {
             id: id
@@ -43,7 +43,7 @@ async function getProductByID (id) {
     });
     return row;
 }
-async function getProductByProductID (product_id) {
+async function getProductByProductID(product_id) {
     const row = await prisma.product.findMany({
         where: {
             product_id: product_id
@@ -52,7 +52,7 @@ async function getProductByProductID (product_id) {
     return row;
 }
 
-async function deleteProduct (productID) {
+async function deleteProduct(productID) {
     try {
         const deletedProduct = await prisma.product.delete({
             where: {
@@ -69,29 +69,40 @@ async function deleteProduct (productID) {
 
 async function getSuggestions(query) {
     try {
-        // Get matching product IDs even with a single character
-        const suggestions = await prisma.product.findMany({
+        const results = await prisma.product.findMany({
             where: {
-                product_id: {
-                    contains: query,
-                    mode: 'insensitive' // Case-insensitive search
-                }
+                OR: [
+                    {
+                        product_id: {
+                            contains: query,
+                            mode: 'insensitive'
+                        }
+                    },
+                    {
+                        product_name: {
+                            contains: query,
+                            mode: 'insensitive'
+                        }
+                    }
+                ]
             },
             select: {
-                product_id: true
+                product_id: true,
+                product_name: true
             },
-            take: 10, // Limit to 10 results
+            take: 10,
             orderBy: {
-                product_id: 'asc' // Order results alphabetically
+                product_id: 'asc'
             }
         });
-        
-        // Return just the product_id strings and filter out nulls
-        return suggestions
-            .map(item => item.product_id)
-            .filter(id => id !== null && id !== undefined);
+
+        return results.map(item => ({
+            product_id: item.product_id,
+            product_name: item.product_name
+        }));
     } catch (error) {
         console.error('Error fetching suggestions:', error);
         throw error;
     }
 }
+

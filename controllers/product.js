@@ -67,15 +67,6 @@ ctrl.createProduct = async (req, res) => {
             let price = parseInt(product_price)
             let product_num = parseInt(product_number)
             console.log('check calendar', calendar)
-            const employeeExists = await modelProduct.getUserUsedByID(employee_ID)
-
-            if (!employeeExists || employeeExists.length === 0) {
-                return res.status(400).json({
-                    status: 'error',
-                    message: 'ไม่มีพนักงานคนนี้อยู่ในระบบ'
-                })
-            }
-
             const ckproduct = await modelProduct.getProductByProductID(product_id).then(row => row[0])
 
             if (ckproduct) {
@@ -303,8 +294,8 @@ ctrl.deleteProductById = async (req, res) => {
             })
             return
         }
-         // 🔥 ลบรูปจาก Cloudinary
-         if (ckproduct.image_public_id) {
+        // 🔥 ลบรูปจาก Cloudinary
+        if (ckproduct.image_public_id) {
             try {
                 await cloudinary.uploader.destroy(ckproduct.image_public_id)
                 console.log('ลบรูปจาก Cloudinary สำเร็จ:', ckproduct.image_public_id)
@@ -341,8 +332,6 @@ ctrl.getProductByProductID = async (req, res) => {
         }
 
         const product = await modelProduct.getProductByProductID(product_id)
-        console.log('product ==>', product)
-
         if (!product) {
             return res.status(404).json({
                 status: 'error',
@@ -354,7 +343,7 @@ ctrl.getProductByProductID = async (req, res) => {
             status: 'success',
             product,
         });
-        
+
     } catch (error) {
         res.status(500).json({
             status: 'error',
@@ -363,20 +352,49 @@ ctrl.getProductByProductID = async (req, res) => {
         })
     }
 }
+ctrl.getProductBySearch = async (req, res) => {
+    const { query } = req.body;
+
+    try {
+        console.log('query ==>', query)
+        if (!query || query.trim() === '') {
+            return res.status(400).json({
+                status: 'error',
+                message: 'ไม่สามารถค้นหาได้กรุณากรอกชื่อ หรือ รหัสสินทรัพย์'
+            });
+        }
+
+        const product = await prisma.product.findMany({
+            where: {
+                OR: [
+                    { product_id: { contains: query, mode: 'insensitive' } },
+                    { product_name: { contains: query, mode: 'insensitive' } }
+                ]
+            },
+            orderBy: { product_id: 'asc' }
+        });
+
+        return res.send({ status: 'success', product });
+    } catch (error) {
+        return res.status(500).json({ status: 'error', message: error.message });
+    }
+}
 
 ctrl.getSuggestions = async (req, res) => {
     try {
         const { query } = req.body;
-        
+        console.log('check query', query)
+
+
         if (!query || query.length < 1) {
             return res.status(200).json({
                 status: 'success',
                 suggestions: []
             });
         }
-        
+
         const suggestions = await modelProduct.getSuggestions(query);
-        
+
         return res.status(200).json({
             status: 'success',
             suggestions

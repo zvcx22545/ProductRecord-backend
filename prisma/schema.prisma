@@ -4,49 +4,46 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL") // ใช้ค่า DATABASE_URL จาก .env
+  url      = env("DATABASE_URL")
 }
 
-
 model User {
-  id            Int       @id @default(autoincrement())
-  user_id       String?   @unique @db.VarChar(255)
-  first_name    String?   @db.VarChar(255)
-  last_name     String?   @db.VarChar(255)
-  department    String?   @db.VarChar(255)
-  position      String?   @db.VarChar(255)
-  role          String    @db.VarChar(50)
-  create_date   DateTime? @db.Timestamptz
-  update_date   DateTime? @db.Timestamptz
-  password      String?   @db.VarChar(255)
-  profile_image String?   @db.VarChar(255)
-  profile_image_public_id   String? @db.VarChar(255)
+  id                      Int       @id @default(autoincrement())
+  user_id                 String?   @unique @db.VarChar(255)
+  first_name              String?   @db.VarChar(255)
+  last_name               String?   @db.VarChar(255)
+  department              String?   @db.VarChar(255)
+  position                String?   @db.VarChar(255)
+  role                    String    @db.VarChar(50)
+  create_date             DateTime? @db.Timestamptz(6)
+  update_date             DateTime? @db.Timestamptz(6)
+  password                String?   @db.VarChar(255)
+  profile_image           String?   @db.VarChar(255)
+  profile_image_public_id String?   @db.VarChar(255)
 
-  products Product[] @relation("UserProducts")
+  // ❌ ลบความสัมพันธ์นี้ออก ถ้าไม่ต้องการ relation กับ Product แล้ว:
+  // products                Product[] @relation("UserProducts")
 
   @@map("users")
 }
 
 
 model Product {
-  id           Int       @id @default(autoincrement())
-  product_name String?   @map("product_name") @db.VarChar(255)
-  user_used    String?   @map("user_used") @db.VarChar(255)
-  product_id   String?   @map("product_id") @db.VarChar(255)
-  price        Int?      @map("price")
-  department   String?   @map("department") @db.VarChar(255)
-  product_type String?   @map("product_type") @db.VarChar(255)
-  image        String?   @map("image") @db.VarChar(255)
-  add_by_user  String?   @map("add_by_user") @db.VarChar(255)
-  create_date  DateTime? @map("create_date") @db.Timestamptz
-  update_date  DateTime? @map("update_date") @db.Timestamptz
-  user_used_id String?   @map("user_used_id") @db.VarChar(255)
-  image_public_id  String? @db.VarChar(255)
-  product_num Int? 
-
-  user User? @relation("UserProducts", fields: [user_used_id], references: [user_id])
-
-  @@map("product")
+  id              Int       @id @default(autoincrement())
+  product_name    String?   @map("product_name") @db.VarChar(255)
+  user_used       String?   @map("user_used") @db.VarChar(255)
+  product_id      String?   @map("product_id") @db.VarChar(255)
+  price           Int?      @map("price")
+  department      String?   @map("department") @db.VarChar(255)
+  product_type    String?   @map("product_type") @db.VarChar(255)
+  image           String?   @map("image") @db.VarChar(255)
+  add_by_user     String?   @map("add_by_user") @db.VarChar(255)
+  create_date     DateTime? @map("create_date") @db.Timestamptz(6)
+  update_date     DateTime? @map("update_date") @db.Timestamptz(6)
+  user_used_id    String?   @map("user_used_id") @db.VarChar(255)
+  image_public_id String?   @db.VarChar(255)
+  product_num     Int?
+  // ลบความสัมพันธ์นี้ออกไป:
+  // user            User?     @relation("UserProducts", fields: [user_used_id], references: [user_id])
 }
-
 
