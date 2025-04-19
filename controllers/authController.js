@@ -1,15 +1,15 @@
 const bcrypt = require('bcryptjs')
 const jwt = require('jsonwebtoken')
 const fs = require("fs")
-const cloudinary = require("../utils/cloudinary");
-const upload = require("../utils/multer");
+const cloudinary = require("../utils/cloudinary")
+const upload = require("../utils/multer")
 const path = require("path")
-const stream = require('stream');
+const stream = require('stream')
 const dayjs = require('dayjs')
-const timezone = require('dayjs/plugin/timezone');
-dayjs.extend(timezone);
+const timezone = require('dayjs/plugin/timezone')
+dayjs.extend(timezone)
 
-const { getUserById, createUser, updateUserById } = require('../models/user');
+const { getUserById, createUser, updateUserById, getAllUsers, getUserId, deleteUserById } = require('../models/user')
 const ctrl = {}
 
 module.exports = ctrl
@@ -19,25 +19,25 @@ module.exports = ctrl
 
 // const storage = multer.diskStorage({
 //     destination: (req, file, cb) => {
-//         const userid = req.body.user_id; // แก้ไขจาก userid เป็น user_id
-//         const uploadPath = `upload/user/${userid}`;
+//         const userid = req.body.user_id // แก้ไขจาก userid เป็น user_id
+//         const uploadPath = `upload/user/${userid}`
 
 //         // ทำการเช็คว่า User มีโฟลเดอร์หรือไม่
 //         if (!fs.existsSync(uploadPath)) {
-//             fs.mkdirSync(uploadPath, { recursive: true });
+//             fs.mkdirSync(uploadPath, { recursive: true })
 //         }
 
-//         cb(null, uploadPath);
+//         cb(null, uploadPath)
 //     },
 
 //     filename: (req, file, cb) => {
-//         cb(null, `${Date.now()}-${file.originalname}`);
+//         cb(null, `${Date.now()}-${file.originalname}`)
 //     }
-// });
+// })
 
 
 
-// const upload = multer({ storage, fileFilter });
+// const upload = multer({ storage, fileFilter })
 
 // Register
 ctrl.register = async (req, res) => {
@@ -47,17 +47,17 @@ ctrl.register = async (req, res) => {
                 return res.status(400).send({
                     status: false,
                     message: err.message
-                });
+                })
             }
 
-            let { user_id, first_name, last_name, position, role, department, username, password } = req.body;
-            let checkUser = await getUserById(user_id); // เปลี่ยนจาก data เป็น user_id
+            let { user_id, first_name, last_name, position, role, department, username, password } = req.body
+            let checkUser = await getUserById(user_id) // เปลี่ยนจาก data เป็น user_id
 
             if (checkUser) {
-                return res.status(400).send({ status: false, message: 'รหัสพนักงานถูกใช้งานแล้ว' });
+                return res.status(400).send({ status: false, message: 'รหัสพนักงานถูกใช้งานแล้ว' })
             }
 
-            let hashpassword = await bcrypt.hash(password, 10);
+            let hashpassword = await bcrypt.hash(password, 10)
             let profile_image = req.body.profile_image
             let create_date = dayjs().toISOString()
             let update_date = dayjs().toISOString()
@@ -73,48 +73,48 @@ ctrl.register = async (req, res) => {
                 profile_image,
                 create_date,
                 update_date
-            });
+            })
 
             res.send({
                 status: true,
                 message: "User registered successfully",
                 newUser
-            });
-        });
+            })
+        })
     } catch (e) {
-        console.log('Error for create:', e);
+        console.log('Error for create:', e)
         res.status(500).send({
             status: false,
             message: "Internal Server Error"
-        });
+        })
     }
-};
+}
 
 ctrl.login = async (req, res) => {
-    const { user_id, password } = req.body;
+    const { user_id, password } = req.body
 
     try {
 
         if (!user_id && user_id === '') {
-            return res.status(400).json({ status: false, message: "กรุณากรอกรหัสพนักงาน" });
+            return res.status(400).json({ status: false, message: "กรุณากรอกรหัสพนักงาน" })
         } else if (!password && password === '') {
-            return res.status(400).json({ status: false, message: "กรุณากรอกรหัสผ่าน" });
+            return res.status(400).json({ status: false, message: "กรุณากรอกรหัสผ่าน" })
         }
 
-        const user = await getUserById(user_id);
+        const user = await getUserById(user_id)
         if (!user) {
-            return res.status(400).json({ status: false, message: "ไม่มีผู้ใช้งานนี้ในระบบ กรุณาสมัครสมาชิก" });
+            return res.status(400).json({ status: false, message: "ไม่มีผู้ใช้งานนี้ในระบบ กรุณาสมัครสมาชิก" })
         }
 
-        const isMatch = await bcrypt.compare(password, user.password);
+        const isMatch = await bcrypt.compare(password, user.password)
 
         if (!isMatch) {
-            return res.status(400).json({ status: false, message: "รหัสผ่านไม่ถูกต้อง" });
+            return res.status(400).json({ status: false, message: "รหัสผ่านไม่ถูกต้อง" })
         }
         const expiresIn = 60 * 60
-        const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET, { expiresIn });
+        const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET, { expiresIn })
         //   const expiresAt = dayjs().add(expiresIn, "second").toISOString()
-        const expiresAt = dayjs().add(expiresIn, "second").tz('Asia/Bangkok').format('DD:MM:YYYY HH:mm:ss');
+        const expiresAt = dayjs().add(expiresIn, "second").tz('Asia/Bangkok').format('DD:MM:YYYY HH:mm:ss')
 
         res.send({
             status: true, message: "เข้าสู่ระบบสำเร็จ",
@@ -131,16 +131,16 @@ ctrl.login = async (req, res) => {
             position: user.position,
             create_date: user.create_date,
             update_date: user.update_date
-        });
+        })
     } catch (error) {
-        res.status(500).json({ status: false, message: "กรุณากรอกข้อมูลให้ถูกต้อง", error: error.message });
+        res.status(500).json({ status: false, message: "กรุณากรอกข้อมูลให้ถูกต้อง", error: error.message })
     }
-};
+}
 
 ctrl.getUserByUserid = async (req, res) => {
     try {
 
-        const user_id = req.params.user_id;
+        const user_id = req.params.user_id
         const row = await getUserById(user_id)
 
         res.send({
@@ -150,7 +150,7 @@ ctrl.getUserByUserid = async (req, res) => {
         })
     } catch (error) {
         console.log('error to get Profile', error)
-        res.status(500).json({ status: false, message: "เกิดข้อผิดพลาดในการโหลดข้อมูล", error: error.message });
+        res.status(500).json({ status: false, message: "เกิดข้อผิดพลาดในการโหลดข้อมูล", error: error.message })
     }
 }
 
@@ -167,12 +167,12 @@ ctrl.updateUser = async (req, res) => {
             const updatedUser = req.body
             // console.log('check updatedUser ==>', updatedUser)
             // อัปโหลดไปยัง Cloudinary
-            const userFolder = `user/${updatedUser.user_id}`; // สร้าง folder ตาม user_if
-            const existingUser = await getUserById(updatedUser.user_id);
-            const oldPublicId = existingUser?.profile_image_public_id;
-            const bufferStream = new stream.PassThrough();
+            const userFolder = `user/${updatedUser.user_id}` // สร้าง folder ตาม user_if
+            const existingUser = await getUserById(updatedUser.user_id)
+            const oldPublicId = existingUser?.profile_image_public_id
+            const bufferStream = new stream.PassThrough()
             if (req.file) {
-                bufferStream.end(req.file.buffer);
+                bufferStream.end(req.file.buffer)
             }
 
             const uploadFromBuffer = () => {
@@ -180,31 +180,31 @@ ctrl.updateUser = async (req, res) => {
                     const cloudinaryStream = cloudinary.uploader.upload_stream(
                         { folder: userFolder }, // ตำแหน่งจัดเก็บ
                         (error, result) => {
-                            if (error) return reject(error);
-                            resolve(result);
+                            if (error) return reject(error)
+                            resolve(result)
                         }
-                    );
+                    )
 
-                    bufferStream.pipe(cloudinaryStream);
-                });
-            };
+                    bufferStream.pipe(cloudinaryStream)
+                })
+            }
 
-            let imageUrl = updatedUser ? updatedUser.profile_image : null;
-            let imagePublicId = oldPublicId || null;
+            let imageUrl = updatedUser ? updatedUser.profile_image : null
+            let imagePublicId = oldPublicId || null
             if (req.file) {
-                 // 🔥 ลบรูปเดิมใน Cloudinary ถ้ามี
-                 if (oldPublicId) {
+                // 🔥 ลบรูปเดิมใน Cloudinary ถ้ามี
+                if (oldPublicId) {
                     try {
-                        await cloudinary.uploader.destroy(oldPublicId);
-                        console.log('ลบรูปโปรไฟล์เดิมสำเร็จ:', oldPublicId);
+                        await cloudinary.uploader.destroy(oldPublicId)
+                        console.log('ลบรูปโปรไฟล์เดิมสำเร็จ:', oldPublicId)
                     } catch (deleteErr) {
-                        console.error('ลบรูปโปรไฟล์เดิมไม่สำเร็จ:', deleteErr);
+                        console.error('ลบรูปโปรไฟล์เดิมไม่สำเร็จ:', deleteErr)
                     }
                 }
 
-                const result = await uploadFromBuffer();
-                imageUrl = result.secure_url;
-                imagePublicId = result.public_id;
+                const result = await uploadFromBuffer()
+                imageUrl = result.secure_url
+                imagePublicId = result.public_id
 
             }
 
@@ -220,8 +220,69 @@ ctrl.updateUser = async (req, res) => {
 
     } catch (error) {
         console.log('error to get Profile', error)
-        res.status(500).json({ status: false, message: "เกิดข้อผิดพลาดในการแก้ไขข้อมูล", error: error.message });
+        res.status(500).json({ status: false, message: "เกิดข้อผิดพลาดในการแก้ไขข้อมูล", error: error.message })
     }
 
 }
+
+ctrl.getAllUser = async (req, res) => {
+    try {
+        const rows = await getAllUsers()
+        // console.log('check rows ==>', rows)
+        res.send({
+            status: true,
+            message: 'Get All User successfully',
+            rows
+        })
+
+    } catch (error) {
+        console.log('error to get Profile', error)
+        res.status(500).json({ status: false, message: "เกิดข้อผิดพลาดในการโหลดข้อมูล", error: error.message })
+    }
+}
+
+ctrl.deleteUserById = async (req, res) => {
+    try {
+        const id = parseInt(req.params.id)
+
+        // ดึง user จาก database
+        const user = await getUserId(id)
+        if (!user) {
+            return res.status(404).json({
+                status: 'error',
+                message: 'ไม่มีข้อมูลพนักงานอยู่ในระบบ',
+            })
+        }
+
+        console.log('check user ==>', user)
+
+        // 🔥 ลบรูปโปรไฟล์จาก Cloudinary ถ้ามี
+        if (user.profile_image_public_id) {
+            try {
+                await cloudinary.uploader.destroy(user.profile_image_public_id)
+                // console.log('ลบรูปโปรไฟล์สำเร็จ:', user.profile_image_public_id)
+                await cloudinary.api.delete_folder(`user/${user.user_id}`)
+                // console.log(`ลบ folder user/${user.user_id} สำเร็จ`)
+            } catch (cloudErr) {
+                console.error('เกิดข้อผิดพลาดตอนลบรูปโปรไฟล์:', cloudErr)
+            }
+        }
+
+        // ลบ user จากฐานข้อมูล
+        await deleteUserById(id)
+
+        res.status(200).json({
+            status: 'success',
+            message: 'User deleted successfully',
+        })
+    } catch (error) {
+        console.error('error to delete user', error)
+        res.status(500).json({
+            status: 'error',
+            message: 'Failed to delete user',
+            error: error.message,
+        })
+    }
+}
+
 
